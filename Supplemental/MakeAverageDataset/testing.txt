@@ -1,0 +1,14 @@
+root=/media/myelin/alexz/YA_HCP_Test
+subject {
+    pattern = ^[0-9]+$
+    root = /media/myelin/alexz/YA_HCP_Test
+}
+surface {
+    job {
+        input-files=/media/myelin/alexz/YA_HCP_Test/{subject}/MMORFNonLinear/fsaverage_LR32k/{subject}.L.midthickness_MSMAll.32k_fs_LR.surf.gii
+        output-std=/media/myelin/alexz/YA_HCP_Test/group/surface_midthickness_std_temp.shape.gii
+        output-uncertainty=/media/myelin/alexz/YA_HCP_Test/group/surface_midthickness_uncertainty_temp.shape.gii
+        output=/media/myelin/alexz/YA_HCP_Test/group/surface_midthickness_temp.surf.gii
+    }
+}
+
