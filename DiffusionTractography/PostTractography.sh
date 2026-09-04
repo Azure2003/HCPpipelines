@@ -1,0 +1,74 @@
+#!/bin/bash
+set -eu
+
+pipedirguessed=0
+if [[ "${HCPPIPEDIR:-}" == "" ]]
+then
+    pipedirguessed=1
+    #fix this if the script is more than one level below HCPPIPEDIR
+    export HCPPIPEDIR="$(dirname -- "$0")/.."
+fi
+
+# Load function libraries
+source "${HCPPIPEDIR}/global/scripts/debug.shlib" "$@"    # Debugging functions; also sources log.shlib
+source "${HCPPIPEDIR}/global/scripts/newopts.shlib" "$@"  # Command line option functions
+
+
+# Perform the steps of the HCP Diffusion Preprocessing Pipeline
+opts_SetScriptDescription "Prepare the data to run Tractography"
+
+opts_AddMandatory '--path' 'StudyFolder' 'Path' "path to session's data folder"
+opts_AddMandatory '--subject' 'Subject' 'subject ID' ""
+opts_AddMandatory '--diffresmesh' 'DiffResMesh' 'number' 'diffusion res mesh number'
+opts_AddMandatory '--bpxdirs' 'BedpostXFolders' 'folders delimited by @' 'BEDPOSTX Folders delimited by @'
+opts_AddMandatory '--regname' 'RegName' 'Name of Registration' 'NONE for MSMSulc, else RegName such as MSMAll'
+opts_AddMandatory '--matrix' 'Matrix' '1 or 3' 'Matrix 1 or Matrix 3 seeding strategy'
+
+
+opts_ParseArguments "$@"
+
+if ((pipedirguessed))
+then
+    log_Err_Abort "HCPPIPEDIR is not set, you must first source your edited copy of Examples/Scripts/SetUpHCPPipeline.sh"
+fi
+
+opts_ShowValues
+
+"$HCPPIPEDIR"/show_version
+
+# ------------------------------------------------------------------------------
+#  Verify required environment variables are set and log value
+# ------------------------------------------------------------------------------
+
+log_Check_Env_Var HCPPIPEDIR
+log_Check_Env_Var FSLDIR
+log_Check_Env_Var CARET7DIR
+
+log_Msg "Platform Information Follows: "
+uname -a
+
+
+T1wDiffusionFolder="${StudyFolder}/${Subject}/T1w/Diffusion"
+DiffusionResolution=`${FSLDIR}/bin/fslval ${T1wDiffusionFolder}/data pixdim1`
+DiffusionResolution=`printf "%0.2f" ${DiffusionResolution}`
+ResultsFolder="${T1wFolder}/Results"
+DiffMeshFolder="${T1wFolder}/fsaverage_LR${DiffResMesh}k"
+TractographyResultsFolder="${ResultsFolder}/Matrix${Matrix}WholeBrainTractography"
+BedpostXFolder="${BedpostXFolders}" #TODO: Allow only one bedpostX folder
+
+log_Msg "Converting Probtrackx Matrices"
+
+if [ ${Matrix} -eq 1 ] ; then
+  ${CARET7DIR}/wb_command -probtrackx-dot-convert ${TractographyResultsFolder}/fdt_matrix1.dot WBSPARSE ${TractographyResultsFolder}/fdt_matrix1.dconn.wbsparse -row-cifti ${DiffMeshFolder}/Grey.dscalar.nii COLUMN -col-cifti ${DiffMeshFolder}/Grey.dscalar.nii COLUMN -transpose
+  ${CARET7DIR}/wb_command -probtrackx-dot-convert ${TractographyResultsFolder}/fdt_matrix1_lengths.dot WBSPARSE ${TractographyResultsFolder}/fdt_matrix1_lengths.dconn.wbsparse -row-cifti ${DiffMeshFolder}/Grey.dscalar.nii COLUMN -col-cifti ${DiffMeshFolder}/Grey.dscalar.nii COLUMN -transpose
+elif [ ${Matrix} -eq 3 ] ; then
+  ${CARET7DIR}/wb_command -probtrackx-dot-convert ${TractographyResultsFolder}/fdt_matrix3.dot WBSPARSE ${TractographyResultsFolder}/fdt_matrix3.dconn.wbsparse -row-cifti ${DiffMeshFolder}/Grey.dscalar.nii COLUMN -col-cifti ${DiffMeshFolder}/Grey.dscalar.nii COLUMN -transpose -make-symmetric
+  ${CARET7DIR}/wb_command -probtrackx-dot-convert ${TractographyResultsFolder}/fdt_matrix3_lengths.dot WBSPARSE ${TractographyResultsFolder}/fdt_matrix3_lengths.dconn.wbsparse -row-cifti ${DiffMeshFolder}/Grey.dscalar.nii COLUMN -col-cifti ${DiffMeshFolder}/Grey.dscalar.nii COLUMN -transpose -make-symmetric
+else
+  log_Err_Abort "Matrix Type Not Supported"
+fi
+${CARET7DIR}/wb_command -convert-matrix4-to-workbench-sparse ${TractographyResultsFolder}/fdt_matrix4_1.mtx ${TractographyResultsFolder}/fdt_matrix4_2.mtx ${TractographyResultsFolder}/fdt_matrix4_3.mtx ${BedpostXFolder}/Diffusion.bedpostX_Whole_Brain_Trajectory_1.25.fiberTEMP.nii ${TractographyResultsFolder}/tract_space_coords_for_fdt_matrix4 ${TractographyResultsFolder}/fdt_matrix4.trajTEMP.wbsparse -cifti-seeds ${DiffMeshFolder}/Grey.dscalar.nii COLUMN
+${CARET7DIR}/wb_command -convert-matrix4-to-matrix2 ${TractographyResultsFolder}/fdt_matrix4.trajTEMP.wbsparse WBSPARSE ${TractographyResultsFolder}/fdt_matrix2.dconn.wbsparse -distances ${TractographyResultsFolder}/fdt_matrix2_dist.dconn.wbsparse
+
+log_Msg "Completed"
+

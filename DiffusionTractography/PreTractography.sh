@@ -1,0 +1,101 @@
+#!/bin/bash
+set -eu
+
+pipedirguessed=0
+if [[ "${HCPPIPEDIR:-}" == "" ]]
+then
+    pipedirguessed=1
+    #fix this if the script is more than one level below HCPPIPEDIR
+    export HCPPIPEDIR="$(dirname -- "$0")/.."
+fi
+
+# Load function libraries
+source "${HCPPIPEDIR}/global/scripts/debug.shlib" "$@"    # Debugging functions; also sources log.shlib
+source "${HCPPIPEDIR}/global/scripts/newopts.shlib" "$@"  # Command line option functions
+
+
+# Perform the steps of the HCP Diffusion Preprocessing Pipeline
+opts_SetScriptDescription "Prepare the data to run Tractography"
+
+opts_AddMandatory '--path' 'StudyFolder' 'Path' "path to session's data folder"
+opts_AddMandatory '--subject' 'Subject' 'subject ID' ""
+opts_AddMandatory '--diffresmesh' 'DiffResMesh' 'number' 'diffusion res mesh number'
+opts_AddMandatory '--bpxdirs' 'BedpostXFolders' 'name of folder containing fiber estimations' ""
+opts_AddMandatory '--regname' 'RegName' 'Name of Registration' 'RegName such as MSMAll'
+opts_AddMandatory '--results-folder' 'folder' 'The specific folder in which the seed of tractography is located. This should follow HCP standards' ""
+opts_AddMandatory '--group' 'whim' 'true or false' "Indicate if you tractography for averaging or just an individual. true if this is for averaging"
+opts_AddOptional '--warp' 'warp' 'If your intended seed space is not diffusion space' ""
+opts_AddOptional '--groupname' 'GroupName' 'Average Group Name' ""
+
+
+
+opts_ParseArguments "$@"
+
+if ((pipedirguessed))
+then
+    log_Err_Abort "HCPPIPEDIR is not set, you must first source your edited copy of Examples/Scripts/SetUpHCPPipeline.sh"
+fi
+
+opts_ShowValues
+
+"$HCPPIPEDIR"/show_version
+
+# ------------------------------------------------------------------------------
+#  Verify required environment variables are set and log value
+# ------------------------------------------------------------------------------
+
+log_Check_Env_Var HCPPIPEDIR
+log_Check_Env_Var FSLDIR
+log_Check_Env_Var CARET7DIR
+
+log_Msg "Platform Information Follows: "
+uname -a
+
+# Setup PATHS
+#PipelineScripts=${HCPPIPEDIR_dMRITract}
+PipelineScripts=${HCPPIPEDIR}/DiffusionTractography/scripts #TODO: Delete when commited and in setup script
+
+
+WholeBrainTrajectoryLabels=${HCPPIPEDIR_Config}/WholeBrainFreeSurferTrajectoryLabelTableLut.txt
+LeftCerebralTrajectoryLabels=${HCPPIPEDIR_Config}/LeftCerebralFreeSurferTrajectoryLabelTableLut.txt 
+RightCerebralTrajectoryLabels=${HCPPIPEDIR_Config}/RightCerebralFreeSurferTrajectoryLabelTableLut.txt
+WholeBrainSubcorticalLabels=${HCPPIPEDIR_Config}/WholeBrainSubcorticalFreeSurferTrajectoryLabelTableLut.txt
+LeftSubcorticalLabels=${HCPPIPEDIR_Config}/LeftSubcorticalFreeSurferTrajectoryLabelTableLut.txt 
+RightSubcorticalLabels=${HCPPIPEDIR_Config}/RightSubcorticalFreeSurferTrajectoryLabelTableLut.txt
+WholeBrainWhiteLabels=${HCPPIPEDIR_Config}/WholeBrainWhiteFreeSurferTrajectoryLabelTableLut.txt
+FreeSurferLabels=${HCPPIPEDIR_Config}/FreeSurferAllLut.txt
+
+
+T1wDiffusionFolder="${StudyFolder}/${Subject}/T1w/Diffusion"
+DiffusionResolution=`${FSLDIR}/bin/fslval ${T1wDiffusionFolder}/data pixdim1`
+DiffusionResolution=`printf "%0.2f" ${DiffusionResolution}`
+
+log_Msg "MakeTrajectorySpace"
+
+
+${PipelineScripts}/MakeTrajectorySpace.sh \
+    --path="$StudyFolder" --subject="$Subject" \
+    --wholebrainlabels="$WholeBrainTrajectoryLabels" \
+    --folder="${folder}" \
+    --warp="${warp}" \
+    --leftcerebrallabels="$LeftCerebralTrajectoryLabels" \
+    --rightcerebrallabels="$RightCerebralTrajectoryLabels" \
+    --wholebrainsubcorticallabels="$WholeBrainSubcorticalLabels" \
+    --leftsubcorticallabels="$LeftSubcorticalLabels" \
+    --rightsubcorticallabels="$RightSubcorticalLabels" \
+    --wholebrainwhitelabels="$WholeBrainWhiteLabels" \
+    --diffresol="${DiffusionResolution}" \
+    --freesurferlabels="${FreeSurferLabels}" \
+    --whim="$whim"
+
+log_Msg "MakeWorkbenchUODFs"
+#${HCPPIPEDIR_dMRITract}/MakeWorkbenchUODFs.sh --path="${StudyFolder}" --subject="${Subject}" --lowresmesh="${LowResMesh}" --diffresol="${DiffusionResolution}" --bpxdirs="${BedpostXFolders}"
+#The bpxdirs is just the name of the folder, it is not a directory. If you do it, it is wrong.
+#whim is a flag. Whim is single sample so different commands needs to be used.
+${PipelineScripts}/MakeWorkbenchUODFs.sh --path="${StudyFolder}" --subject="${Subject}" --folder="${folder}" --diffresol="${DiffusionResolution}" --bpxdirs="${BedpostXFolders}" --whim="${whim}"
+
+log_Msg "MakeSeeds"
+${PipelineScripts}/MakeSeeds.sh --path="${StudyFolder}" --subject="${Subject}" --folder="${folder}" --diffresmesh="${DiffResMesh}" --diffresol="${DiffusionResolution}" --regname="${RegName}" --whim="${whim}" --groupname="$GroupName"
+
+log_Msg "Completed"
+
