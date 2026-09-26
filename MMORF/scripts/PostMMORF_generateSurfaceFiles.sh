@@ -392,12 +392,12 @@ resample_cifti_to_mesh() {
     L_SPHERE_OUT="${HCPPIPEDIR}/global/templates/standard_mesh_atlases/L.sphere.${Mesh}_fs_LR.surf.gii"
     R_SPHERE_OUT="${HCPPIPEDIR}/global/templates/standard_mesh_atlases/R.sphere.${Mesh}_fs_LR.surf.gii"
 
-    local L_AREA_OUT="${AtlasSpaceFolder}/${MeshFolder}/${Session}.L.midthickness.${Mesh}_fs_LR.surf.gii"
-    local R_AREA_OUT="${AtlasSpaceFolder}/${MeshFolder}/${Session}.R.midthickness.${Mesh}_fs_LR.surf.gii"
+    local LeftMidthickStandard="${AtlasSpaceFolder}/${MeshFolder}/${Session}.L.midthickness.${Mesh}_fs_LR.surf.gii"
+    local RightMidthickStandard="${AtlasSpaceFolder}/${MeshFolder}/${Session}.R.midthickness.${Mesh}_fs_LR.surf.gii"
 
     if [[ -n "$RegName" ]]; then
-        L_AREA_OUT="${AtlasSpaceFolder}/${MeshFolder}/${Session}.L.midthickness_${RegName}.${Mesh}_fs_LR.surf.gii"
-        R_AREA_OUT="${AtlasSpaceFolder}/${MeshFolder}/${Session}.R.midthickness_${RegName}.${Mesh}_fs_LR.surf.gii"
+        LeftMidthickStandard="${AtlasSpaceFolder}/${MeshFolder}/${Session}.L.midthickness_${RegName}.${Mesh}_fs_LR.surf.gii"
+        RightMidthickStandard="${AtlasSpaceFolder}/${MeshFolder}/${Session}.R.midthickness_${RegName}.${Mesh}_fs_LR.surf.gii"
     fi
 
     local GREYORD
@@ -408,9 +408,9 @@ resample_cifti_to_mesh() {
         "$GREYORD" COLUMN \
         ADAP_BARY_AREA CUBIC "$OutCifti" \
         -left-spheres "$L_SPHERE_NATIVE" "$L_SPHERE_OUT" \
-        -left-area-surfs "$LeftMidthickNative" "$L_AREA_OUT" \
+        -left-area-surfs "$LeftMidthickNative" "$LeftMidthickStandard" \
         -right-spheres "$R_SPHERE_NATIVE" "$R_SPHERE_OUT" \
-        -right-area-surfs "$RightMidthickNative" "$R_AREA_OUT"
+        -right-area-surfs "$RightMidthickNative" "$RightMidthickStandard"
 }
 
 
