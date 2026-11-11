@@ -21,7 +21,7 @@ opts_AddMandatory '--diffresol' 'DiffusionResolution' 'number' 'diffusion resolu
 
 opts_AddOptional '--bpxfoldername' 'BedpostXFolders' 'folder@folder' 'names of folders containing fiber estimations, delimited by @'
 
-opts_AddOptional '--whimmask' 'WhimMask' 'file' 'path to WHIM mask'
+opts_AddOptional '--whimmask' 'WhimMask' 'file' 'binary mask of voxels included in the WHIM orientations'
 
 opts_ParseArguments "$@"
 
@@ -50,8 +50,11 @@ for BedpostXFolderName in ${BedpostXFolders} ; do
     tempfiles_create diffusion_UODFs_smallval_XXXXXX.nii.gz smallValFile
     wb_command -volume-math '0' "$zeroFile" -var x "$BedpostXFolder"/f_1_std.nii.gz
     wb_command -volume-math '0.001' "$smallValFile" -var x "$BedpostXFolder"/f_1_std.nii.gz
+    echo "OTHER" > ${BedpostXFolder}/tmp.txt
+    echo "1 255 255 255 255" >> ${BedpostXFolder}/tmp.txt
+    ${CARET7DIR}/wb_command -volume-label-import $WhimMask ${BedpostXFolder}/tmp.txt ${BedpostXFolder}/temp_whim_labelvol_${DiffusionResolution}.nii.gz
     ${Caret7_Command} -convert-fiber-orientations \
-      $WhimMask \
+      ${BedpostXFolder}/temp_whim_labelvol_${DiffusionResolution}.nii.gz \
       ${BedpostXFolder}/${BedpostXFolderName}_${trajectory}_${DiffusionResolution}.fiberTEMP.nii \
       -fiber \
         ${BedpostXFolder}/f_1_std.nii.gz \
@@ -77,6 +80,8 @@ for BedpostXFolderName in ${BedpostXFolders} ; do
         "$zeroFile" \
         "$smallValFile" \
         "$smallValFile"
+    rm -f ${BedpostXFolder}/temp_whim_labelvol_${DiffusionResolution}.nii.gz
+    rm -f ${BedpostXFolder}/tmp.txt
   else
     BedpostXFolder="${StudyFolder}/${Subject}/T1w/${BedpostXFolderName}"
     echo "Creating Fiber File for Connectome Workbench"

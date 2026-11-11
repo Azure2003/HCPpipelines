@@ -21,7 +21,7 @@ opts_AddMandatory '--volume-space' 'volspace' 'string' "which volume space to ge
 opts_AddMandatory '--diffresmesh' 'DiffResMesh' 'number' 'Diffusion res mesh number'
 opts_AddMandatory '--diffresol' 'DiffusionResolution' 'number' 'diffusion resolution'
 opts_AddMandatory '--regname' 'RegName' 'Name of Registration' 'RegName such as MSMAll or MSMSulc'
-opts_AddMandatory '--whimmask' 'WhimMask' 'file' 'path to WHIM mask'
+opts_AddMandatory '--whimmask' 'WhimMask' 'file' 'binary mask of voxels included in the WHIM orientations'
 opts_AddOptional '--groupname' 'GroupName' 'Group Folder_Name' ""
 
 

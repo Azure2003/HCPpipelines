@@ -29,7 +29,7 @@ opts_AddOptional '--rightsubcorticallabels' 'RightSubcorticalLabels' 'file' 'rig
 opts_AddOptional '--wholebrainwhitelabels' 'WholeBrainWhiteLabels' 'file' 'whole brain white matter labels'
 opts_AddOptional '--freesurferlabels' 'FreeSurferLabels' 'file' 'FreeSurfer labels'
 
-opts_AddOptional '--whimmask' 'WhimMask' 'file' 'path to WHIM mask'
+opts_AddOptional '--whimmask' 'WhimMask' 'file' 'binary mask of voxels included in the WHIM orientations'
 
 opts_ParseArguments "$@"
 
