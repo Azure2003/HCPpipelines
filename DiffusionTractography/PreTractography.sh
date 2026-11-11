@@ -73,7 +73,7 @@ log_Msg "MakeTrajectorySpace"
 ${PipelineScripts}/MakeTrajectorySpace.sh \
     --path="$StudyFolder" --subject="$Subject" \
     --wholebrainlabels="$WholeBrainTrajectoryLabels" \
-    --volume-space="${VolumeSpace}" \
+    --volume-space="${volspace}" \
     --leftcerebrallabels="$LeftCerebralTrajectoryLabels" \
     --rightcerebrallabels="$RightCerebralTrajectoryLabels" \
     --wholebrainsubcorticallabels="$WholeBrainSubcorticalLabels" \
@@ -86,10 +86,10 @@ ${PipelineScripts}/MakeTrajectorySpace.sh \
 
 log_Msg "MakeWorkbenchUODFs"
 
-${PipelineScripts}/MakeWorkbenchUODFs.sh --path="${StudyFolder}" --subject="${Subject}" --volume-space="${VolumeSpace}" --diffresol="${DiffusionResolution}" --bpxfoldername="${BedpostXFolders}" --whimmask="${WhimMask}"
+${PipelineScripts}/MakeWorkbenchUODFs.sh --path="${StudyFolder}" --subject="${Subject}" --volume-space="${volspace}" --diffresol="${DiffusionResolution}" --bpxfoldername="${BedpostXFolders}" --whimmask="${WhimMask}"
 
 log_Msg "MakeSeeds"
-${PipelineScripts}/MakeSeeds.sh --path="${StudyFolder}" --subject="${Subject}" --volume-space="${VolumeSpace}" --diffresmesh="${DiffResMesh}" --diffresol="${DiffusionResolution}" --regname="${RegName}" --whimmask="${WhimMask}" --groupname="$GroupName"
+${PipelineScripts}/MakeSeeds.sh --path="${StudyFolder}" --subject="${Subject}" --volume-space="${volspace}" --diffresmesh="${DiffResMesh}" --diffresol="${DiffusionResolution}" --regname="${RegName}" --whimmask="${WhimMask}" --groupname="$GroupName"
 
 log_Msg "Completed"
 
