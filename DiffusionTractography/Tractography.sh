@@ -28,7 +28,7 @@ opts_AddMandatory '--seeding-strategy' 'SeedingStrategy' 'Matrix3 or Matrix1' 'M
 opts_AddOptional '--nsamples' 'nsamples' 'integer' 'number of samples we run per seed, has linear effect on runtime, default 100' '100'
 opts_AddOptional '--nsteps' 'nsteps' 'integer' 'number of steps we take per streamline, default 2000' '2000'
 opts_AddOptional '--whim' 'Whim' 'path' "full path to whim folder"
-opts_AddOptional '--whimmask' 'Mask' 'file' "full path to mask used in whim generation. Do not volume labeled"
+opts_AddOptional '--whimmask' 'Mask' 'file' "binary mask of voxels included in the WHIM orientations"
 opts_ParseArguments "$@"
 
 opts_ShowValues
